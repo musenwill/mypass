@@ -1,6 +1,9 @@
 package data
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 type csvCase struct {
 	record    *Record
@@ -8,19 +11,24 @@ type csvCase struct {
 }
 
 func TestCsvRecord(t *testing.T) {
+	ct, err := time.Parse(timeFormat, timeFormat)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	cases := []csvCase{
 		{
-			&Record{"tencent", "qq", "admin", ""},
-			[]string{"tencent", "qq", "admin", "no describe"},
+			&Record{"tencent", "qq", "admin", "", ct},
+			[]string{"tencent", "qq", "admin", "no describe", timeFormat},
 		},
 		{
-			&Record{"tencent", "qq", "admin", "for qq"},
-			[]string{"tencent", "qq", "admin", "for qq"},
+			&Record{"tencent", "qq", "admin", "for qq", ct},
+			[]string{"tencent", "qq", "admin", "for qq", timeFormat},
 		},
 	}
 
 	for _, c := range cases {
-		act := c.record.CsvRecord()
+		act := c.record.ToCsvRecord()
 		if !compareStrs(act, c.csvRecord) {
 			t.Errorf("got %v expected %v", act, c.csvRecord)
 		}
@@ -28,20 +36,25 @@ func TestCsvRecord(t *testing.T) {
 }
 
 func TestFromCsvRecord(t *testing.T) {
+	ct, err := time.Parse(timeFormat, timeFormat)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	cases := []csvCase{
 		{
-			&Record{"tencent", "qq", "admin", "no describe"},
-			[]string{"tencent", "qq", "admin", "no describe"},
+			&Record{"tencent", "qq", "admin", "no describe", ct},
+			[]string{"tencent", "qq", "admin", "no describe", timeFormat},
 		},
 		{
-			&Record{"tencent", "qq", "admin", "for qq"},
-			[]string{"tencent", "qq", "admin", "for qq"},
+			&Record{"tencent", "qq", "admin", "for qq", ct},
+			[]string{"tencent", "qq", "admin", "for qq", timeFormat},
 		},
 	}
 
 	for _, c := range cases {
 		act, err := FromCsvRecord(c.csvRecord)
-		if err != nil || !EqualRecord(act, c.record) {
+		if err != nil || !c.record.Equal(act) {
 			t.Errorf("got %v expected %v, %v", act, c.record, err)
 		}
 	}

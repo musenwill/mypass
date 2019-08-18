@@ -5,6 +5,7 @@ import (
 	"encoding/csv"
 	"errors"
 	"strings"
+	"time"
 )
 
 const fileName = ".pass"
@@ -12,20 +13,21 @@ const fileName = ".pass"
 type Api interface {
 	Save() (string, error)
 	ListGroups() ([]string, error)
+	ListTitles() ([]string, error)
 	ListAll() ([][]string, error)
 	Filter(groupLike, titleLike string) ([][]string, error)
-	Put(group, title, password, describe string) error
+	Put(group, title, password, describe string) (*Record, error)
 	Get(title string) ([]string, error)
-	Delete(title string) error
+	GetHistory(title string) ([][]string, error)
+	DeleteTitle(title string) error
+	DeleteGroup(group string) error
 }
 
 type storage struct {
-	records []*Record
+	records *Records
 }
 
-func NewStoreage(content string) (Api, error) {
-	s := &storage{}
-
+func New(content string) (Api, error) {
 	reader := csv.NewReader(strings.NewReader(content))
 	if reader == nil {
 		return nil, errors.New("failed create csv reader")
@@ -36,33 +38,28 @@ func NewStoreage(content string) (Api, error) {
 		return nil, err
 	}
 
+	var records []*Record
 	for _, l := range lines {
 		r, err := FromCsvRecord(l)
 		if err != nil {
 			return nil, err
 		}
-		s.records = append(s.records, r)
+		records = append(records, r)
 	}
 
-	return s, nil
-
-	// dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// storePath := dir + "/" + fileName
+	return &storage{&Records{records}}, nil
 }
 
 func (p *storage) Save() (string, error) {
+	var csvRecords [][]string
+	for _, r := range p.records.records {
+		csvRecords = append(csvRecords, r.ToCsvRecord())
+	}
+
 	buf := new(bytes.Buffer)
 	writer := csv.NewWriter(buf)
 	if writer == nil {
 		return "", errors.New("failed create csv writer")
-	}
-
-	var csvRecords [][]string
-	for _, r := range p.records {
-		csvRecords = append(csvRecords, r.CsvRecord())
 	}
 
 	err := writer.WriteAll(csvRecords)
@@ -75,59 +72,95 @@ func (p *storage) Save() (string, error) {
 }
 
 func (p *storage) ListGroups() ([]string, error) {
-	set := make(map[string]bool)
+	return p.records.Groups(), nil
+}
 
-	for _, r := range p.records {
-		set[r.Group] = true
-	}
-
-	var groups []string
-	for k := range set {
-		groups = append(groups, k)
-	}
-
-	return groups, nil
+func (p *storage) ListTitles() ([]string, error) {
+	return p.records.Titles(), nil
 }
 
 func (p *storage) ListAll() ([][]string, error) {
-	var records [][]string
-
-	for _, r := range p.records {
-		records = append(records, r.CsvRecord())
+	titles, err := p.ListTitles()
+	if err != nil {
+		return nil, err
 	}
 
-	return records, nil
+	var records []*Record
+	for _, title := range titles {
+		latest := p.records.ByTitle(title).Latest()
+		if latest != nil {
+			records = append(records, latest)
+		}
+	}
+
+	var results [][]string
+	for _, record := range records {
+		results = append(results, record.ToCsvRecord())
+	}
+
+	return results, nil
 }
 
 func (p *storage) Filter(groupLike, titleLike string) ([][]string, error) {
-	return nil, nil
+	records := p.records
+	if strings.Trim(groupLike, "\t\n\r0x20") != "" {
+		records = records.GroupLike(groupLike)
+	}
+	if strings.Trim(titleLike, "\t\n\r0x20") != "" {
+		records = records.TitleLike(titleLike)
+	}
+
+	titles := records.Titles()
+
+	var rs []*Record
+	for _, title := range titles {
+		latest := records.ByTitle(title).Latest()
+		if latest != nil {
+			rs = append(rs, latest)
+		}
+	}
+
+	var results [][]string
+	for _, record := range rs {
+		results = append(results, record.ToCsvRecord())
+	}
+
+	return results, nil
 }
 
-func (p *storage) Put(group, title, password, describe string) error {
-	p.records = append(p.records, &Record{group, title, password, describe})
-	return nil
+func (p *storage) Put(group, title, password, describe string) (*Record, error) {
+	record := &Record{group, title, password, describe, time.Now()}
+	p.records.Put(record)
+	return record, nil
 }
 
 func (p *storage) Get(title string) ([]string, error) {
-	for _, r := range p.records {
-		if r.Title == title {
-			return r.CsvRecord(), nil
-		}
+	latest := p.records.ByTitle(title).Latest()
+	if latest == nil {
+		return nil, errors.New("not found")
 	}
 
-	return nil, errors.New("not found")
+	return latest.ToCsvRecord(), nil
 }
 
-func (p *storage) Delete(title string) error {
-	var newRecords []*Record
+func (p *storage) GetHistory(title string) ([][]string, error) {
+	records := p.records.ByTitle(title)
+	records.Sort()
 
-	for _, r := range p.records {
-		if r.Title != title {
-			newRecords = append(newRecords, r)
-		}
+	var results [][]string
+	for _, record := range records.records {
+		results = append(results, record.ToCsvRecord())
 	}
 
-	p.records = newRecords
+	return results, nil
+}
 
+func (p *storage) DeleteTitle(title string) error {
+	p.records.DeleteTitle(title)
+	return nil
+}
+
+func (p *storage) DeleteGroup(group string) error {
+	p.records.DeleteGroup(group)
 	return nil
 }
