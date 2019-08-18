@@ -2,10 +2,11 @@ GO_EXECUTABLE ?= go
 VERSION = `git describe --always --tags --abbrev=0 | tr -d "[\r\n]"`
 TIME = `date +%FT%T%z`
 
+modeName := github.com/musenwill/mypass
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 BINARY := $(notdir $(patsubst %/,%,$(dir $(mkfile_path))))
 
-LDFLAGS= -ldflags "-X main.Version=${VERSION} -X main.BuildTime=${TIME}"
+LDFLAGS= -ldflags "-X ${modeName}/cmd.Version=${VERSION} -X ${modeName}/cmd.Name=${BINARY}"
 
 UNAME = $(shell uname)
 ifeq (${UNAME}, Darwin)
