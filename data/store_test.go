@@ -108,7 +108,7 @@ ali,支付宝,password,no describe,2019-08-18 12:31:47 +0000 UTC
 ali,淘宝,password,no describe,2019-08-18 12:31:47 +0000 UTC
 `
 
-func loadStore(t *testing.T) Api {
+func loadStore(t *testing.T) Store {
 	store, err := New(content)
 	if err != nil {
 		t.Fatal(err)

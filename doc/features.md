@@ -8,28 +8,28 @@
 mypass init --git [github repository address]
 
 mypass groups
-> password
 > pincode
+> token
 
 mypass titles
-> password
 > pincode
+> token
 
 mypass list
-> password
 > pincode
+> token
 
 mypass filter --group [group-like] --title [title-like]
-> password
 > pincode
+> token
 
 mypass delete -t [title]
-> password
 > pincode
+> token
 
 mypass delete -g [group]
-> password
 > pincode
+> token
 
 mypass put --group [group] --title [title] --describe [describe]
 > password

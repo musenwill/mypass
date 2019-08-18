@@ -56,66 +56,50 @@ func New() *cli.App {
 
 	app.Commands = []cli.Command{
 		{
-			Name:  "init",
-			Usage: "init you local password storeage, can be found in ~/.mypass directory",
-			Flags: []cli.Flag{gitFlag},
-			Action: func(c *cli.Context) error {
-				return nil
-			},
+			Name:   "init",
+			Usage:  "init you local password storeage, can be found in ~/.mypass directory",
+			Flags:  []cli.Flag{gitFlag},
+			Action: initStore,
 		},
 		{
-			Name:  "groups",
-			Usage: "list all existing groups",
-			Action: func(c *cli.Context) error {
-				return nil
-			},
+			Name:   "groups",
+			Usage:  "list all existing groups",
+			Action: groups,
 		},
 		{
-			Name:  "titles",
-			Usage: "list all existing titles (or accounts)",
-			Action: func(c *cli.Context) error {
-				return nil
-			},
+			Name:   "titles",
+			Usage:  "list all existing titles (or accounts)",
+			Action: titles,
 		},
 		{
-			Name:  "filter",
-			Usage: "fuzzy query your accounts by group name or title",
-			Flags: []cli.Flag{groupFlag, titleGlag},
-			Action: func(c *cli.Context) error {
-				return nil
-			},
+			Name:   "filter",
+			Usage:  "fuzzy query your accounts by group name or title",
+			Flags:  []cli.Flag{groupFlag, titleGlag},
+			Action: filter,
 		},
 		{
-			Name:  "delete",
-			Usage: "delete accounts, -t to delete by account name, -g to delete all accounts in the group",
-			Flags: []cli.Flag{groupFlag, titleGlag},
-			Action: func(c *cli.Context) error {
-				return nil
-			},
+			Name:   "delete",
+			Usage:  "delete accounts, -t to delete by account name, -g to delete all accounts in the group",
+			Flags:  []cli.Flag{groupFlag, titleGlag},
+			Action: delete,
 		},
 		{
-			Name:  "put",
-			Usage: "add new password",
-			Flags: []cli.Flag{groupFlagR, titleGlagR, describeFlag},
-			Action: func(c *cli.Context) error {
-				return nil
-			},
+			Name:   "put",
+			Usage:  "add new password",
+			Flags:  []cli.Flag{groupFlagR, titleGlagR, describeFlag},
+			Action: put,
 		},
 		{
-			Name:  "get",
-			Usage: "get password by account name, password copied to clipboard on default, printed to console if -p specified",
-			Flags: []cli.Flag{titleGlagR, printFlag},
-			Action: func(c *cli.Context) error {
-				return nil
-			},
+			Name:   "get",
+			Usage:  "get password by account name, password copied to clipboard on default, printed to console if -p specified",
+			Flags:  []cli.Flag{titleGlagR, printFlag},
+			Action: get,
 		},
 		{
-			Name:  "history",
-			Usage: "print all versions passwords of the account",
-			Flags: []cli.Flag{titleGlagR},
-			Action: func(c *cli.Context) error {
-				return nil
-			},
+			Name:   "history",
+			Usage:  "print all versions passwords of the account",
+			Flags:  []cli.Flag{titleGlagR},
+			Action: history,
 		},
 	}
 

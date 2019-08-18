@@ -10,7 +10,7 @@ import (
 
 const fileName = ".pass"
 
-type Api interface {
+type Store interface {
 	Save() (string, error)
 	ListGroups() ([]string, error)
 	ListTitles() ([]string, error)
@@ -27,7 +27,7 @@ type storage struct {
 	records *Records
 }
 
-func New(content string) (Api, error) {
+func New(content string) (Store, error) {
 	reader := csv.NewReader(strings.NewReader(content))
 	if reader == nil {
 		return nil, errors.New("failed create csv reader")
