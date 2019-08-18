@@ -8,7 +8,26 @@ import (
 	"strings"
 )
 
-var supportedTypes = []string{"str", "file", "url"}
+type ft struct {
+	str, file, url string
+}
+
+func (p *ft) list() []string {
+	return []string{p.str, p.file, p.url}
+}
+
+func (p *ft) contains(t string) bool {
+	for _, s := range p.list() {
+		if s == t {
+			return true
+		}
+	}
+	return false
+}
+
+var factorType = &ft{
+	"str", "file", "url",
+}
 
 func inputPassword() (string, error) {
 	reader := bufio.NewReader(os.Stdin)
@@ -30,7 +49,7 @@ func inputToken() (string, string, error) {
 
 func inputFactor(name string) (string, string, error) {
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Printf("Enter %v(str,file,url): ", name)
+	fmt.Printf("Enter %v%v: ", name, factorType.list())
 	text, err := reader.ReadString('\n')
 	if err != nil {
 		return "", "", err
@@ -42,20 +61,11 @@ func inputFactor(name string) (string, string, error) {
 		return "str", slices[0], nil
 	} else if slen == 2 {
 		t, content := slices[0], slices[1]
-		if !inStrings(slices, t) {
-			return "", "", fmt.Errorf(`supported types are: %v`, supportedTypes)
+		if !factorType.contains(t) {
+			return "", "", fmt.Errorf(`supported types are: %v`, factorType.list())
 		}
 		return t, content, nil
 	} else {
 		return "", "", errors.New(`invalid input, expected "type content"`)
 	}
-}
-
-func inStrings(slices []string, val string) bool {
-	for _, s := range slices {
-		if s == val {
-			return true
-		}
-	}
-	return false
 }

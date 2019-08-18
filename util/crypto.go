@@ -8,44 +8,52 @@ import (
 	"crypto/sha256"
 )
 
-type Api interface {
-	KeyGen256(pincode string, message []byte) []byte
-	Encrypt(key, content []byte) ([]byte, error)
-	Decrypt(key, content []byte) ([]byte, error)
+type CryptoApi interface {
+	GenKey256(pincode, message []byte) []byte
+	Encrypt(content []byte) ([]byte, error)
+	Decrypt(content []byte) ([]byte, error)
 }
 
-type crypto struct{}
+func NewCrypto(pincode, token []byte) CryptoApi {
+	c := &crypto{}
+	c.key = c.GenKey256(pincode, token)
+	return c
+}
+
+type crypto struct {
+	key []byte
+}
 
 func ensureCryptoImplApi() {
-	var _ Api = &crypto{}
+	var _ CryptoApi = &crypto{}
 }
 
-func (p *crypto) KeyGen256(pincode string, message []byte) []byte {
-	h := hmac.New(sha256.New, []byte(pincode))
+func (p *crypto) GenKey256(pincode, message []byte) []byte {
+	h := hmac.New(sha256.New, pincode)
 	h.Write(message)
 	return h.Sum(nil)
 }
 
-func (p *crypto) Encrypt(key, content []byte) ([]byte, error) {
-	block, err := aes.NewCipher(key)
+func (p *crypto) Encrypt(content []byte) ([]byte, error) {
+	block, err := aes.NewCipher(p.key)
 	if err != nil {
 		return nil, err
 	}
 	blockSize := block.BlockSize()
 	origData := p.pkcs7Padding(content, blockSize)
-	blockMode := cipher.NewCBCEncrypter(block, key[:blockSize])
+	blockMode := cipher.NewCBCEncrypter(block, p.key[:blockSize])
 	crypted := make([]byte, len(origData))
 	blockMode.CryptBlocks(crypted, origData)
 	return crypted, nil
 }
 
-func (p *crypto) Decrypt(key, content []byte) ([]byte, error) {
-	block, err := aes.NewCipher(key)
+func (p *crypto) Decrypt(content []byte) ([]byte, error) {
+	block, err := aes.NewCipher(p.key)
 	if err != nil {
 		return nil, err
 	}
 	blockSize := block.BlockSize()
-	blockMode := cipher.NewCBCDecrypter(block, key[:blockSize])
+	blockMode := cipher.NewCBCDecrypter(block, p.key[:blockSize])
 	origData := make([]byte, len(content))
 	blockMode.CryptBlocks(origData, content)
 	origData = p.pkcs7UnPadding(origData)

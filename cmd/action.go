@@ -3,17 +3,30 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/musenwill/mypass/data"
+	"github.com/musenwill/mypass/util"
+
 	"github.com/musenwill/mypass/manager"
 	"github.com/urfave/cli"
 )
 
 func initStore(c *cli.Context) error {
 	gitUrl := c.String("git")
-	return manager.InitStore(gitUrl)
+	srv := manager.New()
+	return srv.Init(gitUrl)
 }
 
 func groups(c *cli.Context) error {
+	srv, err := load()
+	if err != nil {
+		return err
+	}
+
+	results, err := srv.Groups()
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(results)
 
 	return nil
 }
@@ -71,18 +84,38 @@ func history(c *cli.Context) error {
 	return nil
 }
 
-func load() (data.Store, error) {
-	t, pincode, err := inputPincode()
+func load() (manager.SrvApi, error) {
+	t, pincodeSource, err := inputPincode()
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(t, pincode)
-
-	t, token, err := inputToken()
+	pincode, err := factor(t, pincodeSource)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(t, token)
 
-	return nil, nil
+	t, tokenSource, err := inputToken()
+	if err != nil {
+		return nil, err
+	}
+	token, err := factor(t, tokenSource)
+	if err != nil {
+		return nil, err
+	}
+
+	srv := manager.New()
+	err = srv.Load(pincode, token)
+	return srv, err
+}
+
+func factor(t, source string) ([]byte, error) {
+	if t == factorType.str {
+		return []byte(source), nil
+	} else if t == factorType.file {
+		return util.ReadFromFile(source)
+	} else if t == factorType.url {
+		return util.ReadFromUrl(source)
+	} else {
+		return nil, fmt.Errorf("unsupported factor type %v, expected are %v", t, factorType.list())
+	}
 }

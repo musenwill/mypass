@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/urfave/cli"
@@ -47,6 +48,8 @@ func New() *cli.App {
 	}
 
 	app := cli.NewApp()
+	app.ErrWriter = os.Stdout
+	app.EnableBashCompletion = true
 	app.Name = Name
 	app.Version = Version
 	app.Author = "musenwill"

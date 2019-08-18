@@ -6,8 +6,8 @@ import (
 )
 
 func TestKenGen256(t *testing.T) {
-	api := &crypto{}
-	key := api.KeyGen256("hello", []byte("world"))
+	var api CryptoApi = &crypto{}
+	key := api.GenKey256([]byte("hello"), []byte("world"))
 
 	if act, exp := len(key), 256/8; act != exp {
 		t.Errorf("got %v key len expected %v", act, exp)
@@ -17,14 +17,12 @@ func TestKenGen256(t *testing.T) {
 func TestEncryptAndDecrypt(t *testing.T) {
 	origin := "world"
 
-	api := &crypto{}
-	key := api.KeyGen256("hello", []byte(origin))
-
-	cipherText, err := api.Encrypt(key, []byte(origin))
+	api := NewCrypto([]byte("hello"), []byte(origin))
+	cipherText, err := api.Encrypt([]byte(origin))
 	if err != nil {
 		t.Error(err)
 	}
-	plainText, err := api.Decrypt(key, cipherText)
+	plainText, err := api.Decrypt(cipherText)
 	if err != nil {
 		t.Error(err)
 	}
@@ -43,6 +41,6 @@ func BenchmarkKeyGen256(b *testing.B) {
 
 	api := &crypto{}
 	for i := 0; i < b.N; i++ {
-		api.KeyGen256("123456", []byte(msg1024k))
+		api.GenKey256([]byte("123456"), []byte(msg1024k))
 	}
 }
