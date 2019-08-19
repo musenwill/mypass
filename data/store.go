@@ -6,12 +6,15 @@ import (
 	"errors"
 	"strings"
 	"time"
+
+	"github.com/musenwill/mypass/errs"
 )
 
 const fileName = ".pass"
 
 type Store interface {
 	Save() (string, error)
+	All() ([][]string, error)
 	ListGroups() ([]string, error)
 	ListTitles() ([]string, error)
 	ListAll() ([][]string, error)
@@ -69,6 +72,25 @@ func (p *storage) Save() (string, error) {
 	writer.Flush()
 
 	return buf.String(), nil
+}
+
+func (p *storage) All() ([][]string, error) {
+	titles := p.records.Titles()
+
+	var rs []*Record
+	for _, title := range titles {
+		latest := p.records.ByTitle(title).Latest()
+		if latest != nil {
+			rs = append(rs, latest)
+		}
+	}
+
+	var results [][]string
+	for _, record := range rs {
+		results = append(results, record.ToCsvRecord())
+	}
+
+	return results, nil
 }
 
 func (p *storage) ListGroups() ([]string, error) {
@@ -137,7 +159,7 @@ func (p *storage) Put(group, title, password, describe string) (*Record, error) 
 func (p *storage) Get(title string) ([]string, error) {
 	latest := p.records.ByTitle(title).Latest()
 	if latest == nil {
-		return nil, errors.New("not found")
+		return nil, errs.DataNotFound
 	}
 
 	return latest.ToCsvRecord(), nil

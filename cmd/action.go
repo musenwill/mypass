@@ -16,6 +16,26 @@ func initStore(c *cli.Context) error {
 	return srv.Init(gitUrl)
 }
 
+func all(c *cli.Context) error {
+	if err := empty(); err != nil {
+		return err
+	}
+
+	srv, err := load()
+	if err != nil {
+		return err
+	}
+
+	results, err := srv.All()
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("%#v\n", results)
+
+	return nil
+}
+
 func groups(c *cli.Context) error {
 	if err := empty(); err != nil {
 		return err

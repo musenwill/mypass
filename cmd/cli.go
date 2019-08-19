@@ -65,6 +65,11 @@ func New() *cli.App {
 			Action: initStore,
 		},
 		{
+			Name:   "all",
+			Usage:  "list all entries",
+			Action: groups,
+		},
+		{
 			Name:   "groups",
 			Usage:  "list all existing groups",
 			Action: groups,

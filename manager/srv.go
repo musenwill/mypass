@@ -4,11 +4,13 @@ import (
 	"strings"
 
 	"github.com/musenwill/mypass/data"
+	"github.com/musenwill/mypass/errs"
 	"github.com/musenwill/mypass/util"
 )
 
 type SrvApi interface {
 	Init(gitUrl string) error
+	All() ([][]string, error)
 	Groups() ([]string, error)
 	Titles() ([]string, error)
 	Filter(groupLike, titleLike string) ([][]string, error)
@@ -52,6 +54,10 @@ func (p *impl) Init(gitUrl string) error {
 
 	conf := &config{Git: gitUrl}
 	return saveConf(conf, configfile())
+}
+
+func (p *impl) All() ([][]string, error) {
+	return p.store.All()
 }
 
 func (p *impl) Groups() ([]string, error) {
@@ -109,12 +115,18 @@ func (p *impl) Load(pincode, token []byte) error {
 	if !empty {
 		content, err = read(crypto, passfile())
 		if err != nil {
+			if err == errs.DecryptError {
+				err = errs.InvalidKey
+			}
 			return err
 		}
 	}
 
 	store, err := data.New(string(content))
 	if err != nil {
+		if err == errs.InvalidCsvRecord {
+			err = errs.InvalidKey
+		}
 		return err
 	}
 	p.store = store

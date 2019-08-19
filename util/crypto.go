@@ -6,6 +6,8 @@ import (
 	"crypto/cipher"
 	"crypto/hmac"
 	"crypto/sha256"
+
+	"github.com/musenwill/mypass/errs"
 )
 
 type CryptoApi interface {
@@ -56,8 +58,7 @@ func (p *crypto) Decrypt(content []byte) ([]byte, error) {
 	blockMode := cipher.NewCBCDecrypter(block, p.key[:blockSize])
 	origData := make([]byte, len(content))
 	blockMode.CryptBlocks(origData, content)
-	origData = p.pkcs7UnPadding(origData)
-	return origData, nil
+	return p.pkcs7UnPadding(origData)
 }
 
 func (p *crypto) pkcs7Padding(ciphertext []byte, blockSize int) []byte {
@@ -66,8 +67,15 @@ func (p *crypto) pkcs7Padding(ciphertext []byte, blockSize int) []byte {
 	return append(ciphertext, padtext...)
 }
 
-func (p *crypto) pkcs7UnPadding(origData []byte) []byte {
+func (p *crypto) pkcs7UnPadding(origData []byte) ([]byte, error) {
 	length := len(origData)
+	if length <= 0 {
+		return origData, nil
+	}
 	unpadding := int(origData[length-1])
-	return origData[:(length - unpadding)]
+	if length-unpadding <= 0 {
+		return nil, errs.DecryptError
+	}
+
+	return origData[:(length - unpadding)], nil
 }

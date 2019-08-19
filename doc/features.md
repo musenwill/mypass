@@ -6,6 +6,9 @@
 
 
 mypass init --git [github repository address]
+mypass all
+> pincode
+> token
 
 mypass groups
 > pincode

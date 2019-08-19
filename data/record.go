@@ -1,10 +1,11 @@
 package data
 
 import (
-	"errors"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/musenwill/mypass/errs"
 )
 
 const timeFormat = "2006-01-02 15:04:05 +0000 UTC"
@@ -27,7 +28,7 @@ func (p *Record) Equal(r *Record) bool {
 
 func FromCsvRecord(r []string) (*Record, error) {
 	if len(r) != 5 {
-		return nil, errors.New("invalid record")
+		return nil, errs.InvalidCsvRecord
 	}
 	ct, err := time.Parse(timeFormat, r[4])
 	if err != nil {
