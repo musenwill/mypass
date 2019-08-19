@@ -46,6 +46,11 @@ func New() *cli.App {
 		Name:  "print, p",
 		Usage: "whether to print password to console, default is copied to clipboard",
 	}
+	lenFlagR := cli.IntFlag{
+		Name:     "len, l",
+		Usage:    "length of key",
+		Required: true,
+	}
 
 	app := cli.NewApp()
 	app.ErrWriter = os.Stdout
@@ -114,6 +119,12 @@ func New() *cli.App {
 			Name:   "key",
 			Usage:  "reset main key",
 			Action: resetKey,
+		},
+		{
+			Name:   "keygen",
+			Usage:  "generate random key with given length",
+			Flags:  []cli.Flag{lenFlagR, printFlag},
+			Action: genkey,
 		},
 	}
 
