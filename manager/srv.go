@@ -1,6 +1,8 @@
 package manager
 
 import (
+	"strings"
+
 	"github.com/musenwill/mypass/data"
 	"github.com/musenwill/mypass/util"
 )
@@ -11,11 +13,12 @@ type SrvApi interface {
 	Titles() ([]string, error)
 	Filter(groupLike, titleLike string) ([][]string, error)
 	Delete(group, title string) error
-	Put(group, title, describe string) error
+	Put(group, title, password, describe string) error
 	Get(title string, print bool) ([]string, error)
 	History(title string) ([][]string, error)
 	Load(pincode, token []byte) error
 	Save() error
+	Empty() (bool, error)
 }
 
 type impl struct {
@@ -67,7 +70,7 @@ func (p *impl) Delete(group, title string) error {
 	return nil
 }
 
-func (p *impl) Put(group, title, describe string) error {
+func (p *impl) Put(group, title, password, describe string) error {
 	return nil
 }
 
@@ -82,12 +85,21 @@ func (p *impl) History(title string) ([][]string, error) {
 
 func (p *impl) Load(pincode, token []byte) error {
 	crypto := util.NewCrypto(pincode, token)
-	content, err := read(crypto, passfile())
+	p.crypto = crypto
+
+	empty, err := p.Empty()
 	if err != nil {
 		return err
 	}
 
-	p.crypto = crypto
+	content := make([]byte, 0)
+	if !empty {
+		content, err = read(crypto, passfile())
+		if err != nil {
+			return err
+		}
+	}
+
 	store, err := data.New(string(content))
 	if err != nil {
 		return err
@@ -104,4 +116,12 @@ func (p *impl) Save() error {
 	}
 
 	return write(p.crypto, []byte(content), passfile())
+}
+
+func (p *impl) Empty() (bool, error) {
+	content, err := util.ReadFromFile(passfile())
+	if err != nil {
+		return true, err
+	}
+	return strings.TrimSpace(string(content)) == "", nil
 }

@@ -15,7 +15,7 @@ type Record struct {
 }
 
 func (p *Record) ToCsvRecord() []string {
-	if strings.Trim(p.Describe, "\t\n\r0x20") == "" {
+	if strings.TrimSpace(p.Describe) == "" {
 		p.Describe = "no describe"
 	}
 	return []string{p.Group, p.Title, p.Password, p.Describe, p.Ct.Format(timeFormat)}
