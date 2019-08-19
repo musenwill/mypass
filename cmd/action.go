@@ -178,7 +178,7 @@ func put(c *cli.Context) error {
 
 func get(c *cli.Context) error {
 	title := c.String("title")
-	var _ = c.Bool("print")
+	print := c.Bool("print")
 
 	if err := empty(); err != nil {
 		return err
@@ -194,8 +194,13 @@ func get(c *cli.Context) error {
 		return err
 	}
 
-	fmt.Println("your password has copied to clipboard")
-	return clipboard.WriteAll(result.Password)
+	if print {
+		fmt.Println(result.Password)
+		return nil
+	} else {
+		fmt.Println("your password has copied to clipboard")
+		return clipboard.WriteAll(result.Password)
+	}
 }
 
 func history(c *cli.Context) error {
@@ -250,6 +255,36 @@ func resetKey(c *cli.Context) error {
 	srv.SetCrypto(crypto)
 
 	return srv.Save()
+}
+
+func genkey(c *cli.Context) error {
+	length := c.Int("len")
+	print := c.Bool("print")
+
+	if length <= 0 {
+		return nil
+	}
+	if length > 32 {
+		return errors.New("password too long, not suggested")
+	}
+
+	alphabet := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ,./;'`[]-=<>?:{}+_()*&^%$#@!"
+	alphabetLen := len(alphabet)
+	var b []byte
+
+	rand.Seed(time.Now().UnixNano())
+	for i := 0; i < length; i++ {
+		b = append(b, alphabet[rand.Int()%alphabetLen])
+	}
+
+	password := string(b)
+	if print {
+		fmt.Println(password)
+		return nil
+	} else {
+		fmt.Println("your password has copied to clipboard")
+		return clipboard.WriteAll(password)
+	}
 }
 
 func empty() error {
