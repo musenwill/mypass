@@ -18,6 +18,10 @@ endif
 build: check
 	${GO_EXECUTABLE} build ${LDFLAGS} -o ${BINARY}
 
+install:
+	go install
+
+
 check:
 	golint ./... | grep -v "exported" | exit 0
 	go vet ./...
@@ -43,4 +47,4 @@ build-os:
 	-arch="amd64" \
 	-output="dist/{{.OS}}-{{.Arch}}/${BINARY}" .
 
-.PHONY: build build-all build-os clean check
+.PHONY: install build build-all build-os clean check
