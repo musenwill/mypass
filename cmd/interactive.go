@@ -1,12 +1,11 @@
 package cmd
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 
+	"github.com/howeyc/gopass"
 	"github.com/musenwill/mypass/data"
 )
 
@@ -32,13 +31,15 @@ var factorType = &ft{
 }
 
 func inputPassword() (string, error) {
-	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("Enter password: ")
-	text, err := reader.ReadString('\n')
+	input, err := gopass.GetPasswd()
 	if err != nil {
 		return "", err
 	}
-	return text, nil
+	password := string(input)
+	password = strings.TrimSpace(password)
+
+	return password, nil
 }
 
 func inputPincode() (string, string, error) {
@@ -50,12 +51,12 @@ func inputToken() (string, string, error) {
 }
 
 func inputFactor(name string) (string, string, error) {
-	reader := bufio.NewReader(os.Stdin)
 	fmt.Printf("Enter %v%v: ", name, factorType.list())
-	text, err := reader.ReadString('\n')
+	input, err := gopass.GetPasswd()
 	if err != nil {
 		return "", "", err
 	}
+	text := string(input)
 
 	slices := strings.Split(text, " ")
 	slen := len(slices)

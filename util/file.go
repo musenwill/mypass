@@ -5,10 +5,16 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/musenwill/mypass/errs"
 )
 
 func ReadFromFile(path string) ([]byte, error) {
-	return ioutil.ReadFile(path)
+	content, err := ioutil.ReadFile(path)
+	if err != nil {
+		err = errs.NoSuchFile
+	}
+	return content, err
 }
 
 func ReadFromUrl(url string) ([]byte, error) {

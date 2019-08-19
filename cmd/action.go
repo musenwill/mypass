@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/atotto/clipboard"
 	"github.com/musenwill/mypass/util"
 
 	"github.com/musenwill/mypass/manager"
@@ -193,9 +194,8 @@ func get(c *cli.Context) error {
 		return err
 	}
 
-	printRecords(result)
-
-	return nil
+	fmt.Println("your password has copied to clipboard")
+	return clipboard.WriteAll(result.Password)
 }
 
 func history(c *cli.Context) error {
