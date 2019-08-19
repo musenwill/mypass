@@ -138,12 +138,12 @@ func get(c *cli.Context) error {
 		return err
 	}
 
-	result, err := srv.Get(title, print)
+	result, err := srv.Get(title)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(result)
+	fmt.Println(result, print)
 
 	return nil
 }

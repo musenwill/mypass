@@ -14,7 +14,7 @@ type SrvApi interface {
 	Filter(groupLike, titleLike string) ([][]string, error)
 	Delete(group, title string) error
 	Put(group, title, password, describe string) error
-	Get(title string, print bool) ([]string, error)
+	Get(title string) ([]string, error)
 	History(title string) ([][]string, error)
 	Load(pincode, token []byte) error
 	Save() error
@@ -55,32 +55,45 @@ func (p *impl) Init(gitUrl string) error {
 }
 
 func (p *impl) Groups() ([]string, error) {
-	return nil, nil
+	return p.store.ListGroups()
 }
 
 func (p *impl) Titles() ([]string, error) {
-	return nil, nil
+	return p.store.ListTitles()
 }
 
 func (p *impl) Filter(grouplike, titleLike string) ([][]string, error) {
-	return nil, nil
+	return p.store.Filter(grouplike, titleLike)
 }
 
 func (p *impl) Delete(group, title string) error {
+	if strings.TrimSpace(group) != "" {
+		err := p.store.DeleteGroup(group)
+		if err != nil {
+			return err
+		}
+	}
+	if strings.TrimSpace(title) != "" {
+		err := p.store.DeleteTitle(group)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
 func (p *impl) Put(group, title, password, describe string) error {
-	return nil
+	_, err := p.store.Put(group, title, password, describe)
+	return err
 }
 
-func (p *impl) Get(title string, print bool) ([]string, error) {
-
-	return nil, nil
+func (p *impl) Get(title string) ([]string, error) {
+	return p.store.Get(title)
 }
 
 func (p *impl) History(title string) ([][]string, error) {
-	return nil, nil
+	return p.store.GetHistory(title)
 }
 
 func (p *impl) Load(pincode, token []byte) error {

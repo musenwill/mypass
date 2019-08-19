@@ -103,10 +103,10 @@ func (p *storage) ListAll() ([][]string, error) {
 
 func (p *storage) Filter(groupLike, titleLike string) ([][]string, error) {
 	records := p.records
-	if strings.Trim(groupLike, "\t\n\r0x20") != "" {
+	if strings.TrimSpace(groupLike) != "" {
 		records = records.GroupLike(groupLike)
 	}
-	if strings.Trim(titleLike, "\t\n\r0x20") != "" {
+	if strings.TrimSpace(titleLike) != "" {
 		records = records.TitleLike(titleLike)
 	}
 
