@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/musenwill/mypass/data"
 )
 
 type ft struct {
@@ -61,11 +63,22 @@ func inputFactor(name string) (string, string, error) {
 		return "str", slices[0], nil
 	} else if slen == 2 {
 		t, content := slices[0], slices[1]
+		t = strings.TrimSpace(t)
+		content = strings.TrimSpace(content)
 		if !factorType.contains(t) {
 			return "", "", fmt.Errorf(`supported types are: %v`, factorType.list())
 		}
 		return t, content, nil
 	} else {
 		return "", "", errors.New(`invalid input, expected "type content"`)
+	}
+}
+
+func printRecords(records ...*data.Record) {
+	header := "%-16s%-16s%-32s %s\n"
+	fmt.Printf(header, "group", "title", "create at", "describe")
+	fmt.Println("================================================================================")
+	for _, r := range records {
+		fmt.Printf(header, r.Group, r.Title, r.Ct, r.Describe)
 	}
 }

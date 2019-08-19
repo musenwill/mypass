@@ -47,6 +47,12 @@ mypass history [title]
 > pincode
 > token
 
+mypass key
+> pincode
+> token
+> new pincode
+> old token
+
 --group, -g
 --title, -t
 --describe, -d

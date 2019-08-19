@@ -14,14 +14,13 @@ const fileName = ".pass"
 
 type Store interface {
 	Save() (string, error)
-	All() ([][]string, error)
 	ListGroups() ([]string, error)
 	ListTitles() ([]string, error)
-	ListAll() ([][]string, error)
-	Filter(groupLike, titleLike string) ([][]string, error)
+	ListAll() ([]*Record, error)
+	Filter(groupLike, titleLike string) ([]*Record, error)
 	Put(group, title, password, describe string) (*Record, error)
-	Get(title string) ([]string, error)
-	GetHistory(title string) ([][]string, error)
+	Get(title string) (*Record, error)
+	GetHistory(title string) ([]*Record, error)
 	DeleteTitle(title string) error
 	DeleteGroup(group string) error
 }
@@ -74,25 +73,6 @@ func (p *storage) Save() (string, error) {
 	return buf.String(), nil
 }
 
-func (p *storage) All() ([][]string, error) {
-	titles := p.records.Titles()
-
-	var rs []*Record
-	for _, title := range titles {
-		latest := p.records.ByTitle(title).Latest()
-		if latest != nil {
-			rs = append(rs, latest)
-		}
-	}
-
-	var results [][]string
-	for _, record := range rs {
-		results = append(results, record.ToCsvRecord())
-	}
-
-	return results, nil
-}
-
 func (p *storage) ListGroups() ([]string, error) {
 	return p.records.Groups(), nil
 }
@@ -101,7 +81,7 @@ func (p *storage) ListTitles() ([]string, error) {
 	return p.records.Titles(), nil
 }
 
-func (p *storage) ListAll() ([][]string, error) {
+func (p *storage) ListAll() ([]*Record, error) {
 	titles, err := p.ListTitles()
 	if err != nil {
 		return nil, err
@@ -115,15 +95,10 @@ func (p *storage) ListAll() ([][]string, error) {
 		}
 	}
 
-	var results [][]string
-	for _, record := range records {
-		results = append(results, record.ToCsvRecord())
-	}
-
-	return results, nil
+	return records, nil
 }
 
-func (p *storage) Filter(groupLike, titleLike string) ([][]string, error) {
+func (p *storage) Filter(groupLike, titleLike string) ([]*Record, error) {
 	records := p.records
 	if strings.TrimSpace(groupLike) != "" {
 		records = records.GroupLike(groupLike)
@@ -142,12 +117,7 @@ func (p *storage) Filter(groupLike, titleLike string) ([][]string, error) {
 		}
 	}
 
-	var results [][]string
-	for _, record := range rs {
-		results = append(results, record.ToCsvRecord())
-	}
-
-	return results, nil
+	return rs, nil
 }
 
 func (p *storage) Put(group, title, password, describe string) (*Record, error) {
@@ -156,25 +126,19 @@ func (p *storage) Put(group, title, password, describe string) (*Record, error) 
 	return record, nil
 }
 
-func (p *storage) Get(title string) ([]string, error) {
+func (p *storage) Get(title string) (*Record, error) {
 	latest := p.records.ByTitle(title).Latest()
 	if latest == nil {
 		return nil, errs.DataNotFound
 	}
 
-	return latest.ToCsvRecord(), nil
+	return latest, nil
 }
 
-func (p *storage) GetHistory(title string) ([][]string, error) {
+func (p *storage) GetHistory(title string) ([]*Record, error) {
 	records := p.records.ByTitle(title)
 	records.Sort()
-
-	var results [][]string
-	for _, record := range records.records {
-		results = append(results, record.ToCsvRecord())
-	}
-
-	return results, nil
+	return records.records, nil
 }
 
 func (p *storage) DeleteTitle(title string) error {

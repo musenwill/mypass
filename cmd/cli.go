@@ -67,7 +67,7 @@ func New() *cli.App {
 		{
 			Name:   "all",
 			Usage:  "list all entries",
-			Action: groups,
+			Action: all,
 		},
 		{
 			Name:   "groups",
@@ -108,6 +108,11 @@ func New() *cli.App {
 			Usage:  "print all versions passwords of the account",
 			Flags:  []cli.Flag{titleGlagR},
 			Action: history,
+		},
+		{
+			Name:   "key",
+			Usage:  "reset main key",
+			Action: resetKey,
 		},
 	}
 

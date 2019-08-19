@@ -73,7 +73,7 @@ func (p *crypto) pkcs7UnPadding(origData []byte) ([]byte, error) {
 		return origData, nil
 	}
 	unpadding := int(origData[length-1])
-	if length-unpadding <= 0 {
+	if length-unpadding < 0 {
 		return nil, errs.DecryptError
 	}
 

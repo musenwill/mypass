@@ -10,17 +10,18 @@ import (
 
 type SrvApi interface {
 	Init(gitUrl string) error
-	All() ([][]string, error)
+	All() ([]*data.Record, error)
 	Groups() ([]string, error)
 	Titles() ([]string, error)
-	Filter(groupLike, titleLike string) ([][]string, error)
+	Filter(groupLike, titleLike string) ([]*data.Record, error)
 	Delete(group, title string) error
 	Put(group, title, password, describe string) error
-	Get(title string) ([]string, error)
-	History(title string) ([][]string, error)
+	Get(title string) (*data.Record, error)
+	History(title string) ([]*data.Record, error)
 	Load(pincode, token []byte) error
 	Save() error
 	Empty() (bool, error)
+	SetCrypto(crypto util.CryptoApi)
 }
 
 type impl struct {
@@ -56,8 +57,8 @@ func (p *impl) Init(gitUrl string) error {
 	return saveConf(conf, configfile())
 }
 
-func (p *impl) All() ([][]string, error) {
-	return p.store.All()
+func (p *impl) All() ([]*data.Record, error) {
+	return p.store.ListAll()
 }
 
 func (p *impl) Groups() ([]string, error) {
@@ -68,7 +69,7 @@ func (p *impl) Titles() ([]string, error) {
 	return p.store.ListTitles()
 }
 
-func (p *impl) Filter(grouplike, titleLike string) ([][]string, error) {
+func (p *impl) Filter(grouplike, titleLike string) ([]*data.Record, error) {
 	return p.store.Filter(grouplike, titleLike)
 }
 
@@ -94,12 +95,16 @@ func (p *impl) Put(group, title, password, describe string) error {
 	return err
 }
 
-func (p *impl) Get(title string) ([]string, error) {
+func (p *impl) Get(title string) (*data.Record, error) {
 	return p.store.Get(title)
 }
 
-func (p *impl) History(title string) ([][]string, error) {
+func (p *impl) History(title string) ([]*data.Record, error) {
 	return p.store.GetHistory(title)
+}
+
+func (p *impl) SetCrypto(crypto util.CryptoApi) {
+	p.crypto = crypto
 }
 
 func (p *impl) Load(pincode, token []byte) error {

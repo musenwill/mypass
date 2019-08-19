@@ -26,12 +26,12 @@ func all(c *cli.Context) error {
 		return err
 	}
 
-	results, err := srv.All()
+	result, err := srv.All()
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("%#v\n", results)
+	printRecords(result...)
 
 	return nil
 }
@@ -46,12 +46,12 @@ func groups(c *cli.Context) error {
 		return err
 	}
 
-	results, err := srv.Groups()
+	result, err := srv.Groups()
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(results)
+	fmt.Printf("%v\n", result)
 
 	return nil
 }
@@ -66,12 +66,12 @@ func titles(c *cli.Context) error {
 		return err
 	}
 
-	results, err := srv.Titles()
+	result, err := srv.Titles()
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(results)
+	fmt.Printf("%v\n", result)
 
 	return nil
 }
@@ -94,7 +94,7 @@ func filter(c *cli.Context) error {
 		return err
 	}
 
-	fmt.Println(result)
+	printRecords(result...)
 
 	return nil
 }
@@ -147,7 +147,7 @@ func put(c *cli.Context) error {
 
 func get(c *cli.Context) error {
 	title := c.String("title")
-	print := c.Bool("print")
+	var _ = c.Bool("print")
 
 	if err := empty(); err != nil {
 		return err
@@ -163,7 +163,7 @@ func get(c *cli.Context) error {
 		return err
 	}
 
-	fmt.Println(result, print)
+	printRecords(result)
 
 	return nil
 }
@@ -185,9 +185,41 @@ func history(c *cli.Context) error {
 		return err
 	}
 
-	fmt.Println(result)
+	printRecords(result...)
 
 	return nil
+}
+
+func resetKey(c *cli.Context) error {
+	srv, err := load()
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("please set your new key below")
+
+	t, pincodeSource, err := inputPincode()
+	if err != nil {
+		return err
+	}
+	pincode, err := factor(t, pincodeSource)
+	if err != nil {
+		return err
+	}
+
+	t, tokenSource, err := inputToken()
+	if err != nil {
+		return err
+	}
+	token, err := factor(t, tokenSource)
+	if err != nil {
+		return err
+	}
+
+	crypto := util.NewCrypto(pincode, token)
+	srv.SetCrypto(crypto)
+
+	return srv.Save()
 }
 
 func empty() error {

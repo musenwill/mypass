@@ -74,7 +74,7 @@ func TestCRUD(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if !compareStrs(r, qqRecord) {
+	if !compareStrs(r.ToCsvRecord(), qqRecord) {
 		t.Errorf("got %v expected %v", r, qqRecord)
 	}
 
@@ -82,7 +82,7 @@ func TestCRUD(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if !compareStrs(r, wxRecord) {
+	if !compareStrs(r.ToCsvRecord(), wxRecord) {
 		t.Errorf("got %v expected %v", r, qqRecord)
 	}
 
@@ -170,7 +170,7 @@ func TestGet(t *testing.T) {
 		t.Error(err)
 	}
 	exp := []string{"tencent", "qq", "admin2", "for qq", "2019-08-18 12:31:47 +0000 UTC"}
-	if act, exp := record, exp; !compareStrs(act, exp) {
+	if act, exp := record.ToCsvRecord(), exp; !compareStrs(act, exp) {
 		t.Errorf("got %v expected %v", act, exp)
 	}
 }
