@@ -140,6 +140,8 @@ func (p *impl) Load(pincode, token []byte) error {
 		if err != nil {
 			if err == errs.DecryptError {
 				err = errs.InvalidKey
+			} else if err == errs.NoSuchFile {
+				err = errs.Uninited
 			}
 			return err
 		}
@@ -169,6 +171,9 @@ func (p *impl) Save() error {
 func (p *impl) Empty() (bool, error) {
 	content, err := util.ReadFromFile(passfile())
 	if err != nil {
+		if err == errs.NoSuchFile {
+			err = errs.Uninited
+		}
 		return true, err
 	}
 	return strings.TrimSpace(string(content)) == "", nil
