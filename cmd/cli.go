@@ -51,6 +51,7 @@ func New() *cli.App {
 	app.ErrWriter = os.Stdout
 	app.EnableBashCompletion = true
 	app.Name = Name
+	app.Usage = "A terminal password manager"
 	app.Version = Version
 	app.Author = "musenwill"
 	app.Email = "musenwill@qq.com"

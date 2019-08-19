@@ -77,7 +77,7 @@ func inputFactor(name string) (string, string, error) {
 func printRecords(records ...*data.Record) {
 	header := "%-16s%-16s%-32s %s\n"
 	fmt.Printf(header, "group", "title", "create at", "describe")
-	fmt.Println("================================================================================")
+	fmt.Println("--------------------------------------------------------------------------------")
 	for _, r := range records {
 		fmt.Printf(header, r.Group, r.Title, r.Ct, r.Describe)
 	}

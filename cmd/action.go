@@ -3,12 +3,42 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"math/rand"
+	"time"
 
 	"github.com/musenwill/mypass/util"
 
 	"github.com/musenwill/mypass/manager"
 	"github.com/urfave/cli"
 )
+
+func after(c *cli.Context) error {
+	rand.Seed(time.Now().UnixNano())
+	if rand.Float64() > 0.2 {
+		return nil
+	}
+
+	srv, err := load()
+	if err != nil {
+		return err
+	}
+
+	now := time.Now()
+	halfYearAgo := now
+	// halfYearAgo := now.AddDate(0, -6, 0)
+
+	result, err := srv.Olds(halfYearAgo)
+	if err != nil {
+		return err
+	}
+
+	if len(result) > 0 {
+		fmt.Println("password of these accounts were updated 6 months ago, they may be in risk, suggest update them now")
+		printRecords(result...)
+	}
+
+	return nil
+}
 
 func initStore(c *cli.Context) error {
 	gitUrl := c.String("git")

@@ -2,6 +2,7 @@ package manager
 
 import (
 	"strings"
+	"time"
 
 	"github.com/musenwill/mypass/data"
 	"github.com/musenwill/mypass/errs"
@@ -11,6 +12,7 @@ import (
 type SrvApi interface {
 	Init(gitUrl string) error
 	All() ([]*data.Record, error)
+	Olds(time time.Time) ([]*data.Record, error)
 	Groups() ([]string, error)
 	Titles() ([]string, error)
 	Filter(groupLike, titleLike string) ([]*data.Record, error)
@@ -59,6 +61,22 @@ func (p *impl) Init(gitUrl string) error {
 
 func (p *impl) All() ([]*data.Record, error) {
 	return p.store.ListAll()
+}
+
+func (p *impl) Olds(time time.Time) ([]*data.Record, error) {
+	records, err := p.All()
+	if err != nil {
+		return nil, err
+	}
+
+	var result []*data.Record
+	for _, r := range records {
+		if r.Ct.Before(time) {
+			result = append(result, r)
+		}
+	}
+
+	return result, nil
 }
 
 func (p *impl) Groups() ([]string, error) {
