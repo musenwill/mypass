@@ -99,7 +99,7 @@ func (p *impl) Delete(group, title string) error {
 		}
 	}
 	if strings.TrimSpace(title) != "" {
-		err := p.store.DeleteTitle(group)
+		err := p.store.DeleteTitle(title)
 		if err != nil {
 			return err
 		}

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/howeyc/gopass"
+	"github.com/mattn/go-runewidth"
 	"github.com/musenwill/mypass/data"
 )
 
@@ -76,10 +77,32 @@ func inputFactor(name string) (string, string, error) {
 }
 
 func printRecords(records ...*data.Record) {
-	header := "%-16s%-16s%-32s %s\n"
+	header := "%-16s%-32s%-32s %s\n"
 	fmt.Printf(header, "group", "title", "create at", "describe")
 	fmt.Println("--------------------------------------------------------------------------------")
 	for _, r := range records {
-		fmt.Printf(header, r.Group, r.Title, r.Ct, r.Describe)
+		fmt.Print(fixLen(r.Group, -1, 16), fixLen(r.Title, -1, 32), fixLen(r.Ct.String(), -1, 32), fixLen(r.Describe, -1, 32))
+		fmt.Println()
 	}
+}
+
+/* align: -1 left, 0 centre, 1 right */
+func fixLen(text string, align int, fixLen int) string {
+	textWidth := runewidth.StringWidth(text)
+	if textWidth >= fixLen {
+		return text
+	}
+
+	var printText string
+	if align < 0 {
+		printText = text + strings.Repeat(" ", fixLen-textWidth)
+	} else if align == 0 {
+		leftWidth := (fixLen - textWidth) / 2
+		rightWidth := fixLen - leftWidth
+		printText = strings.Repeat(" ", leftWidth) + text + strings.Repeat(" ", rightWidth)
+	} else {
+		printText = strings.Repeat(" ", fixLen-textWidth) + text
+	}
+
+	return printText
 }
