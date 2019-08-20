@@ -5,6 +5,7 @@ go 1.12
 require (
 	github.com/atotto/clipboard v0.1.2
 	github.com/howeyc/gopass v0.0.0-20170109162249-bf9dde6d0d2c
+	github.com/mattn/go-runewidth v0.0.4
 	github.com/pkg/errors v0.8.1
 	github.com/urfave/cli v1.21.0
 	golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4 // indirect
