@@ -13,20 +13,14 @@ import (
 	"github.com/urfave/cli"
 )
 
-func after(c *cli.Context) error {
-	rand.Seed(time.Now().UnixNano())
-	if rand.Float64() > 0.2 {
-		return nil
-	}
-
+func oldPasswords(c *cli.Context) error {
 	srv, err := load()
 	if err != nil {
 		return err
 	}
 
 	now := time.Now()
-	halfYearAgo := now
-	// halfYearAgo := now.AddDate(0, -6, 0)
+	halfYearAgo := now.AddDate(0, -6, 0)
 
 	result, err := srv.Olds(halfYearAgo)
 	if err != nil {
@@ -34,7 +28,7 @@ func after(c *cli.Context) error {
 	}
 
 	if len(result) > 0 {
-		fmt.Println("password of these accounts were updated 6 months ago, they may be in risk, suggest update them now")
+		fmt.Println("password of these accounts were updated 6 months ago, they may be in risk, suggest update them now\n")
 		printRecords(result...)
 	}
 
