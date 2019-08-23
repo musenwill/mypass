@@ -28,7 +28,7 @@ func oldPasswords(c *cli.Context) error {
 	}
 
 	if len(result) > 0 {
-		fmt.Println("password of these accounts were updated 6 months ago, they may be in risk, suggest update them now\n")
+		fmt.Println("password of these accounts were updated 6 months ago, they may be in risk, suggest update them now")
 		printRecords(result...)
 	}
 
