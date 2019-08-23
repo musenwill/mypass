@@ -71,6 +71,11 @@ func New() *cli.App {
 			Action: initStore,
 		},
 		{
+			Name:   "old",
+			Usage:  "list all entries which haven't been updated since 6 months ago",
+			Action: oldPasswords,
+		},
+		{
 			Name:   "all",
 			Usage:  "list all entries",
 			Action: all,
