@@ -20,15 +20,18 @@ type SrvApi interface {
 	Put(group, title, password, describe string) error
 	Get(title string) (*data.Record, error)
 	History(title string) ([]*data.Record, error)
-	Load(pincode, token []byte) error
+	Load() error
 	Save() error
 	Empty() (bool, error)
-	SetCrypto(crypto util.CryptoApi)
+	SetStoreCrypto(crypto util.CryptoApi)
+	SetRecordKey(key []byte)
+	ResetKey(newKey []byte) error
 }
 
 type impl struct {
-	store  data.Store
-	crypto util.CryptoApi
+	store       data.Store
+	storeCrypto util.CryptoApi
+	recordkey   []byte
 }
 
 func New() SrvApi {
@@ -109,26 +112,57 @@ func (p *impl) Delete(group, title string) error {
 }
 
 func (p *impl) Put(group, title, password, describe string) error {
-	_, err := p.store.Put(group, title, password, describe)
+	crypto := util.NewHMacCrypto([]byte(title), p.recordkey)
+	encoded, err := crypt2base64(crypto, []byte(password))
+	if err != nil {
+		return err
+	}
+	_, err = p.store.Put(group, title, encoded, describe)
 	return err
 }
 
 func (p *impl) Get(title string) (*data.Record, error) {
-	return p.store.Get(title)
+	crypto := util.NewHMacCrypto([]byte(title), p.recordkey)
+	r, err := p.store.Get(title)
+	if err != nil {
+		return nil, err
+	}
+
+	decoded, err := decryptFromBase64(crypto, r.Password)
+	if err != nil {
+		return nil, err
+	}
+	r.Password = string(decoded)
+	return r, nil
 }
 
 func (p *impl) History(title string) ([]*data.Record, error) {
-	return p.store.GetHistory(title)
+	lst, err := p.store.GetHistory(title)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, r := range lst {
+		crypto := util.NewHMacCrypto([]byte(r.Title), p.recordkey)
+		decoded, err := decryptFromBase64(crypto, r.Password)
+		if err != nil {
+			return nil, err
+		}
+		r.Password = string(decoded)
+	}
+
+	return lst, nil
 }
 
-func (p *impl) SetCrypto(crypto util.CryptoApi) {
-	p.crypto = crypto
+func (p *impl) SetStoreCrypto(crypto util.CryptoApi) {
+	p.storeCrypto = crypto
 }
 
-func (p *impl) Load(pincode, token []byte) error {
-	crypto := util.NewCrypto(pincode, token)
-	p.crypto = crypto
+func (p *impl) SetRecordKey(key []byte) {
+	p.recordkey = key
+}
 
+func (p *impl) Load() error {
 	empty, err := p.Empty()
 	if err != nil {
 		return err
@@ -136,7 +170,7 @@ func (p *impl) Load(pincode, token []byte) error {
 
 	content := make([]byte, 0)
 	if !empty {
-		content, err = read(crypto, passfile())
+		content, err = read(p.storeCrypto, passfile())
 		if err != nil {
 			if err == errs.DecryptError {
 				err = errs.InvalidKey
@@ -165,7 +199,7 @@ func (p *impl) Save() error {
 		return err
 	}
 
-	return write(p.crypto, []byte(content), passfile())
+	return write(p.storeCrypto, []byte(content), passfile())
 }
 
 func (p *impl) Empty() (bool, error) {
@@ -177,4 +211,23 @@ func (p *impl) Empty() (bool, error) {
 		return true, err
 	}
 	return strings.TrimSpace(string(content)) == "", nil
+}
+
+func (p *impl) ResetKey(newKey []byte) error {
+	for _, r := range p.store.GetRecords() {
+		crypto := util.NewHMacCrypto([]byte(r.Title), p.recordkey)
+		newCrypto := util.NewHMacCrypto([]byte(r.Title), newKey)
+
+		decoded, err := decryptFromBase64(crypto, r.Password)
+		if err != nil {
+			return err
+		}
+
+		encoded, err := crypt2base64(newCrypto, decoded)
+		if err != nil {
+			return err
+		}
+		r.Password = encoded
+	}
+	return nil
 }

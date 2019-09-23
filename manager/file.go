@@ -1,7 +1,6 @@
 package manager
 
 import (
-	"encoding/base64"
 	"io/ioutil"
 	"os"
 
@@ -13,26 +12,14 @@ func read(crypto util.CryptoApi, path string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	decoded, err := base64.StdEncoding.DecodeString(string(encoded))
-	if err != nil {
-		return nil, err
-	}
-
-	decripted, err := crypto.Decrypt(decoded)
-	if err != nil {
-		return nil, err
-	}
-
-	return decripted, nil
+	return decryptFromBase64(crypto, string(encoded))
 }
 
 func write(crypto util.CryptoApi, conent []byte, path string) error {
-	encripted, err := crypto.Encrypt(conent)
+	encoded, err := crypt2base64(crypto, conent)
 	if err != nil {
 		return err
 	}
 
-	encoded := base64.StdEncoding.EncodeToString(encripted)
 	return ioutil.WriteFile(path, []byte(encoded), os.ModePerm)
 }

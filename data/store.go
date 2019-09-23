@@ -13,6 +13,7 @@ import (
 const fileName = ".pass"
 
 type Store interface {
+	GetRecords() []*Record
 	Save() (string, error)
 	ListGroups() ([]string, error)
 	ListTitles() ([]string, error)
@@ -50,6 +51,10 @@ func New(content string) (Store, error) {
 	}
 
 	return &storage{&Records{records}}, nil
+}
+
+func (p *storage) GetRecords() []*Record {
+	return p.records.GetRecords()
 }
 
 func (p *storage) Save() (string, error) {

@@ -11,14 +11,21 @@ import (
 )
 
 type CryptoApi interface {
-	GenKey256(pincode, message []byte) []byte
+	GenKey256(message []byte) []byte
+	GenHMacKey256(pincode, message []byte) []byte
 	Encrypt(content []byte) ([]byte, error)
 	Decrypt(content []byte) ([]byte, error)
 }
 
-func NewCrypto(pincode, token []byte) CryptoApi {
+func NewCrypto(message []byte) CryptoApi {
 	c := &crypto{}
-	c.key = c.GenKey256(pincode, token)
+	c.key = c.GenKey256(message)
+	return c
+}
+
+func NewHMacCrypto(pincode, token []byte) CryptoApi {
+	c := &crypto{}
+	c.key = c.GenHMacKey256(pincode, token)
 	return c
 }
 
@@ -30,7 +37,13 @@ func ensureCryptoImplApi() {
 	var _ CryptoApi = &crypto{}
 }
 
-func (p *crypto) GenKey256(pincode, message []byte) []byte {
+func (p *crypto) GenKey256(message []byte) []byte {
+	h := sha256.New()
+	h.Write(message)
+	return h.Sum(nil)
+}
+
+func (p *crypto) GenHMacKey256(pincode, message []byte) []byte {
 	h := hmac.New(sha256.New, pincode)
 	h.Write(message)
 	return h.Sum(nil)

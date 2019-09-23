@@ -81,7 +81,19 @@ func printRecords(records ...*data.Record) {
 	fmt.Printf(header, "group", "title", "create at", "describe")
 	fmt.Println("--------------------------------------------------------------------------------")
 	for _, r := range records {
-		fmt.Print(fixLen(r.Group, -1, 16), fixLen(r.Title, -1, 32), fixLen(r.Ct.String(), -1, 32), fixLen(r.Describe, -1, 32))
+		fmt.Print(fixLen(r.Group, -1, 16), fixLen(r.Title, -1, 32),
+			fixLen(r.Ct.String(), -1, 32), fixLen(r.Describe, -1, 32))
+		fmt.Println()
+	}
+}
+
+func printRecordsV(records ...*data.Record) {
+	header := "%-16s%-32s%-32s%-32s %s\n"
+	fmt.Printf(header, "group", "title", "password", "create at", "describe")
+	fmt.Println("--------------------------------------------------------------------------------")
+	for _, r := range records {
+		fmt.Print(fixLen(r.Group, -1, 16), fixLen(r.Title, -1, 32),
+			fixLen(r.Password, -1, 32), fixLen(r.Ct.String(), -1, 32), fixLen(r.Describe, -1, 32))
 		fmt.Println()
 	}
 }
