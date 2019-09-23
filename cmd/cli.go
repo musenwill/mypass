@@ -131,12 +131,6 @@ func New() *cli.App {
 			Flags:  []cli.Flag{lenFlagR, printFlag},
 			Action: genkey,
 		},
-		{
-			Name:   "migrate",
-			Usage:  "",
-			Flags:  []cli.Flag{},
-			Action: migrate,
-		},
 	}
 
 	return app

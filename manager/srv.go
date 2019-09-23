@@ -20,13 +20,12 @@ type SrvApi interface {
 	Put(group, title, password, describe string) error
 	Get(title string) (*data.Record, error)
 	History(title string) ([]*data.Record, error)
-	LoadOld(Oldpincode, token []byte) error
 	Load() error
 	Save() error
 	Empty() (bool, error)
 	SetStoreCrypto(crypto util.CryptoApi)
 	SetRecordKey(key []byte)
-	Migrate() error
+	ResetKey(newKey []byte) error
 }
 
 type impl struct {
@@ -194,40 +193,6 @@ func (p *impl) Load() error {
 	return nil
 }
 
-func (p *impl) LoadOld(pincode, token []byte) error {
-	crypto := util.NewHMacCrypto(pincode, token)
-	p.SetStoreCrypto(crypto)
-
-	empty, err := p.Empty()
-	if err != nil {
-		return err
-	}
-
-	content := make([]byte, 0)
-	if !empty {
-		content, err = read(crypto, passfile())
-		if err != nil {
-			if err == errs.DecryptError {
-				err = errs.InvalidKey
-			} else if err == errs.NoSuchFile {
-				err = errs.Uninited
-			}
-			return err
-		}
-	}
-
-	store, err := data.New(string(content))
-	if err != nil {
-		if err == errs.InvalidCsvRecord {
-			err = errs.InvalidKey
-		}
-		return err
-	}
-	p.store = store
-
-	return nil
-}
-
 func (p *impl) Save() error {
 	content, err := p.store.Save()
 	if err != nil {
@@ -248,10 +213,17 @@ func (p *impl) Empty() (bool, error) {
 	return strings.TrimSpace(string(content)) == "", nil
 }
 
-func (p *impl) Migrate() error {
+func (p *impl) ResetKey(newKey []byte) error {
 	for _, r := range p.store.GetRecords() {
 		crypto := util.NewHMacCrypto([]byte(r.Title), p.recordkey)
-		encoded, err := crypt2base64(crypto, []byte(r.Password))
+		newCrypto := util.NewHMacCrypto([]byte(r.Title), newKey)
+
+		decoded, err := decryptFromBase64(crypto, r.Password)
+		if err != nil {
+			return err
+		}
+
+		encoded, err := crypt2base64(newCrypto, decoded)
 		if err != nil {
 			return err
 		}
