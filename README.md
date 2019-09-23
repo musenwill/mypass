@@ -8,8 +8,8 @@ A terminal password manager, simple to use, less to remember, and safety enough.
 
 Security:
 
-1. Main key is 256 bits length, and use AES to encrypt you data.
-2. Main key is made up of two factors, get composed by hmac
+1. Use two keys to protect data, one key to encrypt each password of every records, and the other encrypt the whole store.
+2. If choose key passA to protect password of record R, then the AES256 key is hmac of R.title and passA.
 3. copy password into clipboard, your password can never be exposed.
 
 Usability:
