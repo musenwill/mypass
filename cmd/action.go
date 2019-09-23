@@ -155,6 +155,17 @@ func put(c *cli.Context) error {
 		return err
 	}
 
+	t, tokenSource, err := inputToken()
+	if err != nil {
+		return err
+	}
+	token, err := factor(t, tokenSource)
+	if err != nil {
+		return err
+	}
+
+	srv.SetRecordKey(token)
+
 	password, err := inputPassword()
 	if err != nil {
 		return err
@@ -183,6 +194,17 @@ func get(c *cli.Context) error {
 		return err
 	}
 
+	t, tokenSource, err := inputToken()
+	if err != nil {
+		return err
+	}
+	token, err := factor(t, tokenSource)
+	if err != nil {
+		return err
+	}
+
+	srv.SetRecordKey(token)
+
 	result, err := srv.Get(title)
 	if err != nil {
 		return err
@@ -209,29 +231,29 @@ func history(c *cli.Context) error {
 		return err
 	}
 
+	t, tokenSource, err := inputToken()
+	if err != nil {
+		return err
+	}
+	token, err := factor(t, tokenSource)
+	if err != nil {
+		return err
+	}
+
+	srv.SetRecordKey(token)
+
 	result, err := srv.History(title)
 	if err != nil {
 		return err
 	}
 
-	printRecords(result...)
+	printRecordsV(result...)
 
 	return nil
 }
 
 func resetKey(c *cli.Context) error {
 	srv, err := load()
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("please set your new key below")
-
-	t, pincodeSource, err := inputPincode()
-	if err != nil {
-		return err
-	}
-	pincode, err := factor(t, pincodeSource)
 	if err != nil {
 		return err
 	}
@@ -245,8 +267,32 @@ func resetKey(c *cli.Context) error {
 		return err
 	}
 
-	crypto := util.NewCrypto(pincode, token)
-	srv.SetCrypto(crypto)
+	srv.SetRecordKey(token)
+
+	fmt.Println("please set your new key below")
+
+	t, pincodeSource, err := inputPincode()
+	if err != nil {
+		return err
+	}
+	pincode, err := factor(t, pincodeSource)
+	if err != nil {
+		return err
+	}
+
+	t, tokenSource, err = inputToken()
+	if err != nil {
+		return err
+	}
+	token, err = factor(t, tokenSource)
+	if err != nil {
+		return err
+	}
+
+	storeCrypto := util.NewCrypto(pincode)
+	srv.SetStoreCrypto(storeCrypto)
+
+	srv.ResetKey(token)
 
 	return srv.Save()
 }
@@ -303,17 +349,11 @@ func load() (manager.SrvApi, error) {
 		return nil, err
 	}
 
-	t, tokenSource, err := inputToken()
-	if err != nil {
-		return nil, err
-	}
-	token, err := factor(t, tokenSource)
-	if err != nil {
-		return nil, err
-	}
-
 	srv := manager.New()
-	err = srv.Load(pincode, token)
+	crypto := util.NewCrypto(pincode)
+	srv.SetStoreCrypto(crypto)
+	err = srv.Load()
+
 	return srv, err
 }
 
