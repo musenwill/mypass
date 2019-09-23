@@ -45,6 +45,10 @@ func ensureRecordsImplSort() {
 	var _ sort.Interface = &Records{}
 }
 
+func (p *Records) GetRecords() []*Record {
+	return p.records
+}
+
 func (p *Records) Len() int {
 	return len(p.records)
 }

@@ -14,7 +14,7 @@ import (
 )
 
 func oldPasswords(c *cli.Context) error {
-	srv, err := load()
+	srv, _, _, err := loadOld()
 	if err != nil {
 		return err
 	}
@@ -46,7 +46,7 @@ func all(c *cli.Context) error {
 		return err
 	}
 
-	srv, err := load()
+	srv, _, _, err := loadOld()
 	if err != nil {
 		return err
 	}
@@ -66,7 +66,7 @@ func groups(c *cli.Context) error {
 		return err
 	}
 
-	srv, err := load()
+	srv, _, _, err := loadOld()
 	if err != nil {
 		return err
 	}
@@ -86,7 +86,7 @@ func titles(c *cli.Context) error {
 		return err
 	}
 
-	srv, err := load()
+	srv, _, _, err := loadOld()
 	if err != nil {
 		return err
 	}
@@ -109,7 +109,7 @@ func filter(c *cli.Context) error {
 		return err
 	}
 
-	srv, err := load()
+	srv, _, _, err := loadOld()
 	if err != nil {
 		return err
 	}
@@ -132,7 +132,7 @@ func delete(c *cli.Context) error {
 		return err
 	}
 
-	srv, err := load()
+	srv, _, _, err := loadOld()
 	if err != nil {
 		return err
 	}
@@ -150,7 +150,7 @@ func put(c *cli.Context) error {
 	title := c.String("title")
 	describe := c.String("describe")
 
-	srv, err := load()
+	srv, _, _, err := loadOld()
 	if err != nil {
 		return err
 	}
@@ -178,7 +178,7 @@ func get(c *cli.Context) error {
 		return err
 	}
 
-	srv, err := load()
+	srv, _, _, err := loadOld()
 	if err != nil {
 		return err
 	}
@@ -204,7 +204,7 @@ func history(c *cli.Context) error {
 		return err
 	}
 
-	srv, err := load()
+	srv, _, _, err := loadOld()
 	if err != nil {
 		return err
 	}
@@ -214,13 +214,13 @@ func history(c *cli.Context) error {
 		return err
 	}
 
-	printRecords(result...)
+	printRecordsV(result...)
 
 	return nil
 }
 
 func resetKey(c *cli.Context) error {
-	srv, err := load()
+	srv, _, _, err := loadOld()
 	if err != nil {
 		return err
 	}
@@ -245,8 +245,8 @@ func resetKey(c *cli.Context) error {
 		return err
 	}
 
-	crypto := util.NewCrypto(pincode, token)
-	srv.SetCrypto(crypto)
+	crypto := util.NewHMacCrypto(pincode, token)
+	srv.SetStoreCrypto(crypto)
 
 	return srv.Save()
 }
@@ -281,6 +281,18 @@ func genkey(c *cli.Context) error {
 	}
 }
 
+func migrate(c *cli.Context) error {
+	srv, pincode, token, err := loadOld()
+	if err != nil {
+		return err
+	}
+	crypto := util.NewCrypto(pincode)
+	srv.SetStoreCrypto(crypto)
+	srv.SetRecordKey(token)
+	srv.Migrate()
+	return srv.Save()
+}
+
 func empty() error {
 	srv := manager.New()
 	empty, err := srv.Empty()
@@ -293,28 +305,28 @@ func empty() error {
 	return nil
 }
 
-func load() (manager.SrvApi, error) {
+func loadOld() (manager.SrvApi, []byte, []byte, error) {
 	t, pincodeSource, err := inputPincode()
 	if err != nil {
-		return nil, err
+		return nil, nil, nil, err
 	}
 	pincode, err := factor(t, pincodeSource)
 	if err != nil {
-		return nil, err
+		return nil, nil, nil, err
 	}
 
 	t, tokenSource, err := inputToken()
 	if err != nil {
-		return nil, err
+		return nil, nil, nil, err
 	}
 	token, err := factor(t, tokenSource)
 	if err != nil {
-		return nil, err
+		return nil, nil, nil, err
 	}
 
 	srv := manager.New()
-	err = srv.Load(pincode, token)
-	return srv, err
+	err = srv.LoadOld(pincode, token)
+	return srv, pincode, token, err
 }
 
 func factor(t, source string) ([]byte, error) {
