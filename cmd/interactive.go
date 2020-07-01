@@ -77,13 +77,25 @@ func inputFactor(name string) (string, string, error) {
 }
 
 func printRecords(records ...*data.Record) {
+	dict := make(map[string][]*data.Record)
+	for _, r := range records {
+		lst := dict[r.Group]
+		if lst == nil {
+			lst = make([]*data.Record, 0)
+		}
+		lst = append(lst, r)
+		dict[r.Group] = lst
+	}
+
 	header := "%-16s%-32s%-32s %s\n"
 	fmt.Printf(header, "group", "title", "create at", "describe")
 	fmt.Println("--------------------------------------------------------------------------------")
-	for _, r := range records {
-		fmt.Print(fixLen(r.Group, -1, 16), fixLen(r.Title, -1, 32),
-			fixLen(r.Ct.String(), -1, 32), fixLen(r.Describe, -1, 32))
-		fmt.Println()
+	for _, lst := range dict {
+		for _, r := range lst {
+			fmt.Print(fixLen(r.Group, -1, 16), fixLen(r.Title, -1, 32),
+				fixLen(r.Ct.String(), -1, 32), fixLen(r.Describe, -1, 32))
+			fmt.Println()
+		}
 	}
 }
 
