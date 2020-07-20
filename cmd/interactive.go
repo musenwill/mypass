@@ -88,44 +88,78 @@ func printRecords(records ...*data.Record) {
 	}
 
 	header := "%-16s%-32s%-32s %s\n"
-	fmt.Printf(header, "group", "title", "create at", "describe")
-	fmt.Println("--------------------------------------------------------------------------------")
+	header = fmt.Sprintf(header, "group", "title", "create at", "describe")
+	maxWidth := runewidth.StringWidth(header)
+
+	var sb strings.Builder
 	for _, lst := range dict {
 		for _, r := range lst {
-			fmt.Print(fixLen(r.Group, -1, 16), fixLen(r.Title, -1, 32),
-				fixLen(r.Ct.String(), -1, 32), fixLen(r.Describe, -1, 32))
-			fmt.Println()
+			line := strings.Join([]string{fixWidth(r.Group, -1, 16), fixWidth(r.Title, -1, 32),
+				fixWidth(r.Ct.String(), -1, 32), fixWidth(r.Describe, -1, 32)}, "")
+			if width := runewidth.StringWidth(line); width > maxWidth {
+				maxWidth = width
+			}
+			sb.WriteString(line)
+			sb.WriteString("\n")
 		}
 	}
+
+	gridLine := strings.Repeat("-", maxWidth)
+	fmt.Print(header)
+	fmt.Println(gridLine)
+	fmt.Print(sb.String())
 }
 
 func printRecordsV(records ...*data.Record) {
-	header := "%-16s%-32s%-32s%-32s %s\n"
-	fmt.Printf(header, "group", "title", "password", "create at", "describe")
-	fmt.Println("--------------------------------------------------------------------------------")
+	dict := make(map[string][]*data.Record)
 	for _, r := range records {
-		fmt.Print(fixLen(r.Group, -1, 16), fixLen(r.Title, -1, 32),
-			fixLen(r.Password, -1, 32), fixLen(r.Ct.String(), -1, 32), fixLen(r.Describe, -1, 32))
-		fmt.Println()
+		lst := dict[r.Group]
+		if lst == nil {
+			lst = make([]*data.Record, 0)
+		}
+		lst = append(lst, r)
+		dict[r.Group] = lst
 	}
+
+	header := "%-16s%-32s%-32s%-32s %s\n"
+	header = fmt.Sprintf(header, "group", "title", "password", "create at", "describe")
+	maxWidth := runewidth.StringWidth(header)
+
+	var sb strings.Builder
+	for _, lst := range dict {
+		for _, r := range lst {
+			line := strings.Join([]string{fixWidth(r.Group, -1, 16), fixWidth(r.Title, -1, 32),
+				fixWidth(r.Password, -1, 32), fixWidth(r.Ct.String(), -1, 32), fixWidth(r.Describe, -1, 32)}, "")
+			if width := runewidth.StringWidth(line); width > maxWidth {
+				maxWidth = width
+			}
+			sb.WriteString(line)
+			sb.WriteString("\n")
+		}
+	}
+
+	gridLine := strings.Repeat("-", maxWidth)
+	fmt.Print(header)
+	fmt.Println(gridLine)
+	fmt.Print(sb.String())
 }
 
 /* align: -1 left, 0 centre, 1 right */
-func fixLen(text string, align int, fixLen int) string {
+func fixWidth(text string, align int, fixWidth int) string {
 	textWidth := runewidth.StringWidth(text)
-	if textWidth >= fixLen {
+	if textWidth >= fixWidth {
 		return text
 	}
 
 	var printText string
 	if align < 0 {
-		printText = text + strings.Repeat(" ", fixLen-textWidth)
+		printText = text + strings.Repeat(" ", fixWidth-textWidth)
 	} else if align == 0 {
-		leftWidth := (fixLen - textWidth) / 2
-		rightWidth := fixLen - leftWidth
+		leftWidth := (fixWidth - textWidth) / 2
+		rightWidth := fixWidth - leftWidth
 		printText = strings.Repeat(" ", leftWidth) + text + strings.Repeat(" ", rightWidth)
 	} else {
-		printText = strings.Repeat(" ", fixLen-textWidth) + text
+		printText = strings.Repeat(" ", fixWidth-textWidth) + text
 	}
 
 	return printText
