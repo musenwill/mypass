@@ -1,166 +1,113 @@
 package cmd
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/howeyc/gopass"
-	"github.com/mattn/go-runewidth"
-	"github.com/musenwill/mypass/data"
+	"github.com/musenwill/mypass/util"
 )
 
-type ft struct {
-	str, file, url string
-}
+// A factor is typed as a string, or as "file <path>" or "url <url>" to take a
+// file content as the factor.
+const (
+	factorStr  = "str"
+	factorFile = "file"
+	factorUrl  = "url"
 
-func (p *ft) list() []string {
-	return []string{p.str, p.file, p.url}
-}
-
-func (p *ft) contains(t string) bool {
-	for _, s := range p.list() {
-		if s == t {
-			return true
-		}
-	}
-	return false
-}
-
-var factorType = &ft{
-	"str", "file", "url",
-}
+	// factorTypes are the types, as they are shown in a prompt and in an error.
+	factorTypes = "[" + factorStr + " " + factorFile + " " + factorUrl + "]"
+)
 
 func inputPassword() (string, error) {
-	fmt.Print("Enter password: ")
-	input, err := gopass.GetPasswd()
-	if err != nil {
-		return "", err
-	}
-	password := string(input)
-	password = strings.TrimSpace(password)
+	for {
+		fmt.Print("Enter password: ")
+		input, err := gopass.GetPasswd()
+		if err != nil {
+			return "", err
+		}
 
-	return password, nil
+		password := strings.TrimSpace(string(input))
+		if password != "" {
+			return password, nil
+		}
+		// an empty password opens nothing
+		fmt.Println("it can't be empty, try again")
+	}
 }
 
-func inputPincode() (string, string, error) {
+func inputPincode() ([]byte, error) {
 	return inputFactor("pincode")
 }
 
-func inputToken() (string, string, error) {
+func inputToken() ([]byte, error) {
 	return inputFactor("token")
 }
 
-func inputFactor(name string) (string, string, error) {
-	fmt.Printf("Enter %v%v: ", name, factorType.list())
+// A factor being set is asked for twice, a mistyped one would lock the store
+// for good. An empty one protects nothing, it is asked for again.
+func inputPincodeTwice() ([]byte, error) {
+	return inputFactorTwice("pincode")
+}
+
+func inputTokenTwice() ([]byte, error) {
+	return inputFactorTwice("token")
+}
+
+func inputFactorTwice(name string) ([]byte, error) {
+	for {
+		first, err := inputFactor(name)
+		if err != nil {
+			return nil, err
+		}
+		second, err := inputFactor(name + " again")
+		if err != nil {
+			return nil, err
+		}
+		switch {
+		case len(first) == 0 || len(second) == 0:
+			fmt.Println("it can't be empty, try again")
+		case !bytes.Equal(first, second):
+			fmt.Println("the two inputs differ, try again")
+		default:
+			return first, nil
+		}
+	}
+}
+
+// inputFactor asks for a factor, a pincode or a token, without echo. It returns
+// the content the factor stands for.
+func inputFactor(name string) ([]byte, error) {
+	fmt.Printf("Enter %v%v: ", name, factorTypes)
 	input, err := gopass.GetPasswd()
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
-	text := string(input)
 
-	slices := strings.Split(text, " ")
-	slen := len(slices)
-	if slen == 1 {
-		return "str", slices[0], nil
-	} else if slen == 2 {
-		t, content := slices[0], slices[1]
-		t = strings.TrimSpace(t)
-		content = strings.TrimSpace(content)
-		if !factorType.contains(t) {
-			return "", "", fmt.Errorf(`supported types are: %v`, factorType.list())
-		}
-		return t, content, nil
-	} else {
-		return "", "", errors.New(`invalid input, expected "type content"`)
-	}
+	return parseFactor(string(input))
 }
 
-func printRecords(records ...*data.Record) {
-	dict := make(map[string][]*data.Record)
-	for _, r := range records {
-		lst := dict[r.Group]
-		if lst == nil {
-			lst = make([]*data.Record, 0)
-		}
-		lst = append(lst, r)
-		dict[r.Group] = lst
+// parseFactor reads a line typed for a factor. A line without a type is a
+// string, "file <path>" and "url <url>" take the content they point at.
+func parseFactor(line string) ([]byte, error) {
+	slices := strings.Split(line, " ")
+	if len(slices) == 1 {
+		return []byte(slices[0]), nil
+	}
+	if len(slices) != 2 {
+		return nil, errors.New(`invalid input, expected "type content"`)
 	}
 
-	header := "%-16s%-32s%-32s %s\n"
-	header = fmt.Sprintf(header, "group", "title", "create at", "describe")
-	maxWidth := runewidth.StringWidth(header)
-
-	var sb strings.Builder
-	for _, lst := range dict {
-		for _, r := range lst {
-			line := strings.Join([]string{fixWidth(r.Group, -1, 16), fixWidth(r.Title, -1, 32),
-				fixWidth(r.Ct.String(), -1, 32), fixWidth(r.Describe, -1, 32)}, "")
-			if width := runewidth.StringWidth(line); width > maxWidth {
-				maxWidth = width
-			}
-			sb.WriteString(line)
-			sb.WriteString("\n")
-		}
+	t, content := strings.TrimSpace(slices[0]), strings.TrimSpace(slices[1])
+	switch t {
+	case factorStr:
+		return []byte(content), nil
+	case factorFile:
+		return util.ReadFromFile(content)
+	case factorUrl:
+		return util.ReadFromURL(content)
 	}
-
-	gridLine := strings.Repeat("-", maxWidth)
-	fmt.Print(header)
-	fmt.Println(gridLine)
-	fmt.Print(sb.String())
-}
-
-func printRecordsV(records ...*data.Record) {
-	dict := make(map[string][]*data.Record)
-	for _, r := range records {
-		lst := dict[r.Group]
-		if lst == nil {
-			lst = make([]*data.Record, 0)
-		}
-		lst = append(lst, r)
-		dict[r.Group] = lst
-	}
-
-	header := "%-16s%-32s%-32s%-32s %s\n"
-	header = fmt.Sprintf(header, "group", "title", "password", "create at", "describe")
-	maxWidth := runewidth.StringWidth(header)
-
-	var sb strings.Builder
-	for _, lst := range dict {
-		for _, r := range lst {
-			line := strings.Join([]string{fixWidth(r.Group, -1, 16), fixWidth(r.Title, -1, 32),
-				fixWidth(r.Password, -1, 32), fixWidth(r.Ct.String(), -1, 32), fixWidth(r.Describe, -1, 32)}, "")
-			if width := runewidth.StringWidth(line); width > maxWidth {
-				maxWidth = width
-			}
-			sb.WriteString(line)
-			sb.WriteString("\n")
-		}
-	}
-
-	gridLine := strings.Repeat("-", maxWidth)
-	fmt.Print(header)
-	fmt.Println(gridLine)
-	fmt.Print(sb.String())
-}
-
-/* align: -1 left, 0 centre, 1 right */
-func fixWidth(text string, align int, fixWidth int) string {
-	textWidth := runewidth.StringWidth(text)
-	if textWidth >= fixWidth {
-		return text
-	}
-
-	var printText string
-	if align < 0 {
-		printText = text + strings.Repeat(" ", fixWidth-textWidth)
-	} else if align == 0 {
-		leftWidth := (fixWidth - textWidth) / 2
-		rightWidth := fixWidth - leftWidth
-		printText = strings.Repeat(" ", leftWidth) + text + strings.Repeat(" ", rightWidth)
-	} else {
-		printText = strings.Repeat(" ", fixWidth-textWidth) + text
-	}
-
-	return printText
+	return nil, fmt.Errorf(`supported types are: %v`, factorTypes)
 }

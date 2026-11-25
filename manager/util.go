@@ -7,32 +7,19 @@ import (
 	"github.com/musenwill/mypass/util"
 )
 
+// pathExists tells whether there is something at path.
 func pathExists(path string) bool {
 	_, err := os.Stat(path)
 	return !os.IsNotExist(err)
 }
 
-func createDir(path string) error {
-	return os.MkdirAll(path, os.ModePerm)
-}
-
-func createFile(path string) error {
-	file, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	return nil
-}
-
 func crypt2base64(crypto util.CryptoApi, content []byte) (string, error) {
-	encripted, err := crypto.Encrypt(content)
+	encrypted, err := crypto.Encrypt(content)
 	if err != nil {
 		return "", err
 	}
 
-	return base64.StdEncoding.EncodeToString(encripted), nil
+	return base64.StdEncoding.EncodeToString(encrypted), nil
 }
 
 func decryptFromBase64(crypto util.CryptoApi, encoded string) ([]byte, error) {
@@ -41,10 +28,10 @@ func decryptFromBase64(crypto util.CryptoApi, encoded string) ([]byte, error) {
 		return nil, err
 	}
 
-	decripted, err := crypto.Decrypt(decoded)
+	decrypted, err := crypto.Decrypt(decoded)
 	if err != nil {
 		return nil, err
 	}
 
-	return decripted, nil
+	return decrypted, nil
 }

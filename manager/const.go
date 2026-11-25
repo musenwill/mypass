@@ -2,23 +2,29 @@ package manager
 
 import (
 	"log"
+	"os"
 	"os/user"
+	"strings"
 )
 
-var (
-	userDir = ""
-)
+// homeEnv points mypass at another data directory than ~/.mypass. The home comes
+// from the system user database, so $HOME doesn't apply. Tests and scripts need it
+// to keep the real store out of the way.
+const homeEnv = "MYPASS_HOME"
 
-func init() {
+// legacyBackupSuffix marks where `mypass upgrade` keeps the v1 store.
+const legacyBackupSuffix = ".v1.bak"
+
+func passdir() string {
+	if dir := strings.TrimSpace(os.Getenv(homeEnv)); dir != "" {
+		return dir
+	}
+
 	usr, err := user.Current()
 	if err != nil {
 		log.Fatal(err)
 	}
-	userDir = usr.HomeDir
-}
-
-func passdir() string {
-	return userDir + "/.mypass"
+	return usr.HomeDir + "/.mypass"
 }
 
 func passfile() string {

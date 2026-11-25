@@ -1,29 +1,15 @@
 package manager
 
 import (
-	"io/ioutil"
 	"os"
 
 	"gopkg.in/yaml.v2"
 )
 
+// config is config.yaml. It keeps the git address the store is synced by, the
+// synchronization itself is done by the user.
 type config struct {
 	Git string `yaml:"git"`
-}
-
-func loadConf(configFile string) (*config, error) {
-	conf := new(config)
-	file, err := ioutil.ReadFile(configFile)
-	if err != nil {
-		return nil, err
-	}
-
-	err = yaml.Unmarshal(file, conf)
-	if err != nil {
-		return nil, err
-	}
-
-	return conf, nil
 }
 
 func saveConf(conf *config, configFile string) error {
@@ -31,6 +17,5 @@ func saveConf(conf *config, configFile string) error {
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(configFile, content, os.ModePerm)
-	return err
+	return os.WriteFile(configFile, content, 0600)
 }

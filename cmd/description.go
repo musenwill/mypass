@@ -1,15 +1,16 @@
 package cmd
 
 const description = `
-A simple terminal password manager, simple to use, less to remember, use git as cloud synchronization, for personal usage.package cmd
+A simple terminal password manager, simple to use, less to remember, use git as cloud synchronization, for personal usage.
 
 Security designation:
-	1. Main key is 256 bits length, and use AES to encrypt you data.
-	2. Main key is made up of two factors, get composed by hmac
-	3. copy password into clipboard, your password can never be exposed.
+	1. Two keys protect the data, the pincode encrypts the whole store, the token encrypts every password on its own.
+	2. A key comes from its factor by Argon2id, with a random salt, and data is encrypted by AES-256-GCM. A wrong key, or any change on the store file, is told apart.
+	3. A factor can be a string, or the content of a file, local or from internet.
+	4. a password goes into the clipboard by default, it is printed only by "get -p" and by "history".
 
 Usability designation:
-	1. Two factors of yoru main key can be string or any file, and files can be get from internet. Pepole are good at remembering images not codes.
+	1. People are good at remembering images not codes, take a file as a factor.
 	2. All history of your password will be kept.
-	3. If you choose a large file as a factor, then hmac may be quite slow, make it more hard to break your another factor.
+	3. Every account has a sn, listed by the list commands, mypass get -n gets it without the title.
 `

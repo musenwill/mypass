@@ -14,44 +14,50 @@ var (
 	Name    = ""
 )
 
-func New() *cli.App {
-	gitFlag := cli.StringFlag{
-		Name:     "git",
+var (
+	gitFlag = cli.StringFlag{
+		Name:     flagGit,
 		Usage:    "your git repository address `URL`",
 		Required: true,
 	}
-	groupFlag := cli.StringFlag{
-		Name:  "group, g",
+	groupFlag = cli.StringFlag{
+		Name:  flagGroup,
 		Usage: "group name",
 	}
-	groupFlagR := cli.StringFlag{
-		Name:     "group, g",
+	groupFlagR = cli.StringFlag{
+		Name:     flagGroup,
 		Usage:    "group name",
 		Required: true,
 	}
-	titleGlag := cli.StringFlag{
-		Name:  "title, t",
+	titleFlag = cli.StringFlag{
+		Name:  flagTitle,
 		Usage: "title name",
 	}
-	titleGlagR := cli.StringFlag{
-		Name:     "title, t",
+	titleFlagR = cli.StringFlag{
+		Name:     flagTitle,
 		Usage:    "title name",
 		Required: true,
 	}
-	describeFlag := cli.StringFlag{
-		Name:  "describe, d",
+	snFlag = cli.IntFlag{
+		Name:  flagSn,
+		Usage: "sn of the account, listed by the list commands",
+	}
+	describeFlag = cli.StringFlag{
+		Name:  flagDescribe,
 		Usage: "a simple description of account",
 	}
-	printFlag := cli.BoolFlag{
-		Name:  "print, p",
+	printFlag = cli.BoolFlag{
+		Name:  flagPrint,
 		Usage: "whether to print password to console, default is copied to clipboard",
 	}
-	lenFlagR := cli.IntFlag{
-		Name:     "len, l",
+	lenFlagR = cli.IntFlag{
+		Name:     flagLen,
 		Usage:    "length of key",
 		Required: true,
 	}
+)
 
+func New() *cli.App {
 	app := cli.NewApp()
 	app.ErrWriter = os.Stdout
 	app.EnableBashCompletion = true
@@ -66,7 +72,7 @@ func New() *cli.App {
 	app.Commands = []cli.Command{
 		{
 			Name:   "init",
-			Usage:  "init you local password storeage, can be found in ~/.mypass directory",
+			Usage:  "init your local password storage, can be found in ~/.mypass directory",
 			Flags:  []cli.Flag{gitFlag},
 			Action: initStore,
 		},
@@ -77,7 +83,7 @@ func New() *cli.App {
 		},
 		{
 			Name:   "all",
-			Usage:  "list all entries",
+			Usage:  "list all entries, sorted by group and title",
 			Action: all,
 		},
 		{
@@ -93,31 +99,31 @@ func New() *cli.App {
 		{
 			Name:   "filter",
 			Usage:  "fuzzy query your accounts by group name or title",
-			Flags:  []cli.Flag{groupFlag, titleGlag},
+			Flags:  []cli.Flag{groupFlag, titleFlag},
 			Action: filter,
 		},
 		{
 			Name:   "delete",
 			Usage:  "delete accounts, -t to delete by account name, -g to delete all accounts in the group",
-			Flags:  []cli.Flag{groupFlag, titleGlag},
+			Flags:  []cli.Flag{groupFlag, titleFlag},
 			Action: delete,
 		},
 		{
 			Name:   "put",
-			Usage:  "add new password",
-			Flags:  []cli.Flag{groupFlagR, titleGlagR, describeFlag},
+			Usage:  "add new password, it becomes a new version of the account when the title exists",
+			Flags:  []cli.Flag{groupFlagR, titleFlagR, describeFlag},
 			Action: put,
 		},
 		{
 			Name:   "get",
-			Usage:  "get password by account name, password copied to clipboard on default, printed to console if -p specified",
-			Flags:  []cli.Flag{titleGlagR, printFlag},
+			Usage:  "get password by account name or by sn, password copied to clipboard on default, printed to console if -p specified",
+			Flags:  []cli.Flag{titleFlag, snFlag, printFlag},
 			Action: get,
 		},
 		{
 			Name:   "history",
 			Usage:  "print all versions passwords of the account",
-			Flags:  []cli.Flag{titleGlagR},
+			Flags:  []cli.Flag{titleFlagR},
 			Action: history,
 		},
 		{
@@ -130,6 +136,11 @@ func New() *cli.App {
 			Usage:  "generate random key with given length",
 			Flags:  []cli.Flag{lenFlagR, printFlag},
 			Action: genkey,
+		},
+		{
+			Name:   "upgrade",
+			Usage:  "upgrade the store from v1 to v2, re-encrypted with the new scheme, the v1 store is kept as a backup",
+			Action: upgrade,
 		},
 	}
 

@@ -1,25 +1,41 @@
 package manager
 
 import (
-	"io/ioutil"
 	"os"
-
-	"github.com/musenwill/mypass/util"
+	"path/filepath"
 )
 
-func read(crypto util.CryptoApi, path string) ([]byte, error) {
-	encoded, err := util.ReadFromFile(path)
-	if err != nil {
-		return nil, err
-	}
-	return decryptFromBase64(crypto, string(encoded))
-}
-
-func write(crypto util.CryptoApi, conent []byte, path string) error {
-	encoded, err := crypt2base64(crypto, conent)
+// writeFileAtomic writes to a temp file beside path first, and renames it over
+// path only after the temp file is on the disk. The old file is left untouched
+// when anything fails. The file ends up with mode 0600, only its owner can read it.
+func writeFileAtomic(path string, content []byte) error {
+	tmp, err := os.CreateTemp(filepath.Dir(path), "."+filepath.Base(path)+".*.tmp")
 	if err != nil {
 		return err
 	}
+	tmpName := tmp.Name()
+	// nothing left to remove once the rename is done
+	defer os.Remove(tmpName)
 
-	return ioutil.WriteFile(path, []byte(encoded), os.ModePerm)
+	if _, err = tmp.Write(content); err != nil {
+		tmp.Close()
+		return err
+	}
+	if err = tmp.Sync(); err != nil {
+		tmp.Close()
+		return err
+	}
+	if err = tmp.Close(); err != nil {
+		return err
+	}
+	if err = os.Rename(tmpName, path); err != nil {
+		return err
+	}
+
+	// make the rename durable too, it fails silently where directories can't be synced
+	if dir, err := os.Open(filepath.Dir(path)); err == nil {
+		dir.Sync()
+		dir.Close()
+	}
+	return nil
 }
